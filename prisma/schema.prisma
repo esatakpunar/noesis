@@ -1,0 +1,94 @@
+// Prisma schema — noesis
+// docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TopicCategory {
+  diksiyon
+  psikoloji
+  felsefe
+  bilim
+  nadir
+  etimoloji
+  sanat
+}
+
+enum TopicDifficulty {
+  kolay
+  orta
+  zor
+}
+
+enum TopicSource {
+  seed // editöryel çekirdek veri seti
+  ai // Gemini ile üretilmiş
+  user // kullanıcının custom konusu
+}
+
+// id = Clerk user id (ör. "user_xxx"), Clerk auth kaynağı olduğu için burada
+// ayrıca üretilmiyor — bkz. src/lib/auth.ts
+model User {
+  id            String   @id
+  email         String?  @unique
+  name          String?
+  createdAt     DateTime @default(now())
+
+  streakCount    Int       @default(0)
+  streakLastDate DateTime?
+
+  codexEntries CodexEntry[]
+  topicHistory TopicHistory[]
+}
+
+model Topic {
+  id          String          @id @default(cuid())
+  title       String          @unique
+  category    TopicCategory
+  difficulty  TopicDifficulty
+  pronunciation String?
+  origin        String?
+  researchPrompts String[]
+  source        TopicSource     @default(seed)
+  createdAt     DateTime        @default(now())
+
+  codexEntries CodexEntry[]
+  history      TopicHistory[]
+
+  @@index([category, difficulty])
+}
+
+// Kullanıcıya hangi konu ne zaman gösterildi — tekrar önleme ve kişiselleştirme için
+model TopicHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  topicId   String
+  shownAt   DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([userId, shownAt])
+}
+
+model CodexEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  topicId   String
+  notes     String?
+  wpm            Int?
+  fillerWordCount Int?
+  clarityScore    Float?
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
