@@ -2,6 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { CATEGORIES } from "@/lib/categories";
 import { getWeeklyChallenge } from "@/lib/weeklyChallenge";
 
+// Canlı veriye bağlı (streak/oturum sayıları) — build anında değil, istek
+// anında render edilmeli. Aksi halde deploy, build sırasındaki DB durumuna
+// kilitlenir ve build DB'ye ulaşamazsa tüm deploy patlar.
+export const dynamic = "force-dynamic";
+
 export default async function LeaderboardPage() {
   const users = await prisma.user.findMany({
     select: {
