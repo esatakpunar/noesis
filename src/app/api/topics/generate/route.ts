@@ -5,6 +5,7 @@ import { generateTopic } from "@/lib/gemini";
 import { ensureDbUser } from "@/lib/auth";
 import { isTooSimilar, pickCategory, pickDifficulty } from "@/lib/personalize";
 import { DAILY_FREE_LIMIT, getTodayUsage } from "@/lib/plan";
+import { pickFromPool } from "@/lib/pool";
 
 const RequestSchema = z.object({
   category: z
@@ -19,18 +20,23 @@ export async function POST(req: NextRequest) {
   const user = await ensureDbUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const body = RequestSchema.parse(await req.json());
+
   const usedToday = await getTodayUsage(user.id);
   if (usedToday >= DAILY_FREE_LIMIT) {
+    const pooled = await pickFromPool(user.id, body.category);
+    if (pooled) {
+      await prisma.topicHistory.create({ data: { userId: user.id, topicId: pooled.id } });
+      return NextResponse.json({ ...pooled, fromPool: true });
+    }
     return NextResponse.json(
       {
         error: "daily_limit_reached",
-        message: `Günlük ücretsiz limitin (${DAILY_FREE_LIMIT} konu) doldu. Yarın devam edebilirsin.`,
+        message: `Günlük ücretsiz limitin (${DAILY_FREE_LIMIT} konu) doldu ve havuzda görmediğin başka konu kalmadı. Yarın devam edebilirsin.`,
       },
       { status: 429 },
     );
   }
-
-  const body = RequestSchema.parse(await req.json());
 
   const [recentTitles, category, difficulty] = await Promise.all([
     prisma.topic.findMany({

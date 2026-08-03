@@ -26,4 +26,5 @@ export interface Topic {
   pronunciation: string | null;
   origin: string | null;
   researchPrompts: string[];
+  fromPool?: boolean;
 }

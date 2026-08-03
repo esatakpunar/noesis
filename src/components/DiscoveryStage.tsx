@@ -41,8 +41,11 @@ export default function DiscoveryStage({
         const body = await res.json().catch(() => null);
         throw new Error(body?.message ?? "Konu getirilemedi");
       }
-      setTopic(await res.json());
-      setRemaining((prev) => (prev !== null ? Math.max(0, prev - 1) : prev));
+      const data: Topic = await res.json();
+      setTopic(data);
+      if (!data.fromPool) {
+        setRemaining((prev) => (prev !== null ? Math.max(0, prev - 1) : prev));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Konu üretilirken bir sorun oldu. Tekrar dene.");
     } finally {
@@ -125,6 +128,14 @@ export default function DiscoveryStage({
               <span>{CATEGORIES.find((c) => c.id === topic.category)?.label}</span>
               <span className="w-1 h-1 rounded-full bg-accent" />
               <span>{DIFFICULTY_LABEL[topic.difficulty]}</span>
+              {topic.fromPool && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-accent" />
+                  <span title="Günlük limitin doldu, bu konu paylaşılan havuzdan geldi">
+                    Havuzdan
+                  </span>
+                </>
+              )}
             </div>
 
             <h2 className="font-display italic text-6xl sm:text-7xl mb-3">{topic.title}</h2>
