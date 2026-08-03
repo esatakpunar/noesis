@@ -16,7 +16,8 @@ export default function ResearchStage({
   onNotesChange: (v: string) => void;
   onFinish: () => void;
 }) {
-  const { label, progress } = useCountdown(SPRINT_SECONDS, onFinish);
+  const { label, progress, remaining } = useCountdown(SPRINT_SECONDS, onFinish);
+  const isEnding = remaining <= 60 && remaining > 0;
 
   return (
     <div className="flex-1 flex flex-col px-6 py-10 max-w-5xl mx-auto w-full">
@@ -28,13 +29,20 @@ export default function ResearchStage({
           <h1 className="font-display italic text-4xl sm:text-5xl mt-1">{topic.title}</h1>
         </div>
         <div className="text-right shrink-0 ml-6">
-          <div className="font-mono text-4xl tabular-nums">{label}</div>
+          <div
+            className={`font-mono text-4xl tabular-nums ${isEnding ? "text-accent animate-pulse" : ""}`}
+          >
+            {label}
+          </div>
           <div className="w-28 h-1 bg-ink-line mt-2 overflow-hidden">
             <div
               className="h-full bg-accent transition-[width]"
               style={{ width: `${progress * 100}%` }}
             />
           </div>
+          {isEnding && (
+            <p className="mt-1 font-mono text-[0.65rem] text-accent">Son dakika, bitiriyoruz</p>
+          )}
         </div>
       </header>
 
