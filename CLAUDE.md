@@ -2,10 +2,9 @@
 
 # noesis — Proje Kuralları
 
-**noesis**, PARADOXA konseptinin (15 dk araştır, 2 dk diksiyonla anlat) sıfırdan,
-gerçek ürün ölçeğinde yeniden inşasıdır. Bu repo başka bir projeden kod
-kopyalanarak değil, aynı fikrin bağımsız implementasyonu olarak kuruldu —
-seed veri, kod, prompt metinleri hep özgün.
+**noesis**, sosyal medyanın yarattığı zihinsel uyuşukluğa karşı günlük bir
+alışkanlık: her gün nadir/hiç duyulmamış bir kavram sunulur, 15 dakika
+araştırılır, 2 dakikada diksiyonla anlatılır.
 
 ## Tech stack
 
@@ -17,49 +16,54 @@ seed veri, kod, prompt metinleri hep özgün.
   versiyon deprecate olabiliyor, bkz. commit geçmişi), yapılandırılmış JSON
   çıktı (`responseSchema`).
 - **Clerk** (`@clerk/nextjs` v7) — auth. `src/proxy.ts` (Next 16'da `middleware.ts`
-  yerine `proxy.ts` kullanılıyor — deprecated uyarısı bunun için) tüm route'ları
-  `/sign-in`, `/sign-up` hariç korur. `src/lib/auth.ts#ensureDbUser` Clerk
-  oturumundaki kullanıcıyı `User` tablosunda garanti eder — `User.id` = Clerk
-  user id, ayrı cuid üretilmiyor. v7'de `SignedIn`/`SignedOut` export'u yok,
-  `useUser()` hook'u kullan (bkz. `src/components/AuthHeader.tsx`).
+  yerine `proxy.ts` kullanılıyor — deprecated uyarısı bunun için) route'ları
+  korur; `/`, `/terms`, `/privacy`, `/sign-in`, `/sign-up` herkese açık.
+  `src/lib/auth.ts#ensureDbUser` Clerk oturumundaki kullanıcıyı `User`
+  tablosunda garanti eder — `User.id` = Clerk user id, ayrı cuid üretilmiyor.
+  v7'de `SignedIn`/`SignedOut` export'u yok, `useUser()` hook'u kullan (bkz.
+  `src/components/AuthHeader.tsx`). **Hâlâ development instance'ta çalışıyor**
+  — production'a geçiş bekliyor (bkz. Bilinen sınırlar).
 - Estetik yön: "gece scriptorium" — sıcak neredeyse-siyah zemin (`--ink`),
   parşömen metin (`--paper`), mühür-kırmızısı vurgu (`--accent`). Fontlar:
   Instrument Serif (başlık), Literata (gövde), IBM Plex Mono (sayaç/veri).
   Yeni ekran/komponent eklerken bu palete ve tipografi hiyerarşisine uy.
 
-## Yol Haritası (fazlar)
+## Mevcut özellikler
 
-- **Faz 0 — Scaffold** ✅ Next.js + Prisma + Gemini motoru temel iskeleti.
-- **Faz 0.5 — Frontend** ✅ Discovery/Research/Presentation/Result akışı,
-  özgün "gece scriptorium" tasarımı, Gemini API'ye bağlı çalışıyor.
-- **Faz 1 — Backend temel** ✅ Clerk auth, `User`/`CodexEntry`/`TopicHistory`
-  gerçek DB'de, `/api/codex` ve `/api/topics/generate` oturum bazlı çalışıyor,
-  streak `/api/codex` içinde hesaplanıyor.
-- **Faz 2 — Dinamik konu motoru** ✅ `src/lib/personalize.ts`: kategori seçimi
-  kullanıcının tamamladığı konulara ağırlıklı (Laplace düzeltmeli) rastgele,
-  %30 keşif oranıyla; zorluk netlik skoruna göre kademeli artıyor/azalıyor.
-  `isTooSimilar` trigram-Jaccard ile yakın-tekrar başlıkları eliyor (ör.
-  "Petrikor" ~ "Petrichor").
-- **Faz 3 — Konuşma analizi**: Web Speech API yerine/yanında sunucu taraflı STT
-  (Whisper API), tarayıcı bağımsız WPM/dolgu kelime/akıcılık skoru.
-- **Faz 4 — Elde tutma & sosyal** ✅ `/leaderboard` (en uzun seri + en çok konu,
-  server component, doğrudan Prisma), `/codex` (geçmiş + rozetler), rozet
-  kataloğu `src/lib/badges.ts`, haftalık meydan okuma `src/lib/weeklyChallenge.ts`
-  (ISO hafta numarasına göre deterministik kategori rotasyonu, DB'siz).
-- **Faz 5 — Yayın**: Vercel deploy, domain. Freemium sınırı ✅ —
-  `src/lib/plan.ts#DAILY_FREE_LIMIT` (5/gün), `/api/topics/generate` 429
-  döner. Ödeme/plan yükseltme altyapısı yok, hepsi şu an ücretsiz katmanda.
-  Deploy adımı henüz yapılmadı (git push + Vercel bağlantısı gerekiyor,
-  hesap işlemleri kullanıcı tarafından yapılmalı).
+- **Discovery/Research/Presentation/Result akışı** (`src/components/AppFlow.tsx`)
+  — 15 dk araştırma + 2 dk diksiyon sunumu, Web Speech API ile canlı analiz.
+- **Landing sayfası** (`src/components/LandingPage.tsx`) — girişsiz ziyaretçiye
+  gösterilir, `src/app/page.tsx` `useUser()` ile dallanır.
+- **Kişiselleştirme** (`src/lib/personalize.ts`) — kategori ağırlıklı rastgele
+  (%30 keşif oranı), zorluk netlik skoruna göre kademeli.
+- **Paylaşılan havuz fallback** (`src/lib/pool.ts`) — günlük limit dolunca veya
+  Gemini gerçekten hata verince, kullanıcının görmediği bir havuz konusu
+  sunulur (Gemini maliyeti yok).
+- **Kendi konunu gir** (`/api/topics/custom`) — Gemini'ye gitmeden, şablon
+  araştırma sorularıyla anında başlar, günlük limiti tüketmez.
+- **Isınma egzersizi** (`src/components/WarmupModal.tsx`) — header'dan her an
+  açılabilir, hiçbir sayacı etkilemez.
+- **Paylaşım kartı** (`src/components/ShareCard.tsx`, `ShareModal.tsx`) —
+  sonuç ekranından 1080×1080 PNG indirme (`html-to-image`).
+- **Freemium** (`src/lib/plan.ts`) — günlük 5 ücretsiz konu, aşınca önce havuz
+  denenir, o da tükenirse 429.
+- **Liderlik/Kodeks/rozet/haftalık meydan okuma** — `/leaderboard`, `/codex`,
+  `src/lib/badges.ts`, `src/lib/weeklyChallenge.ts`.
 
-Faz 3 (sunucu taraflı STT) ertelendi — OpenAI key gelince ele alınacak.
-Şu an Faz 0, 0.5, 1, 2 ve 4 tamamlandı, Faz 5 kısmen (freemium) tamam,
-deploy adımı bekliyor.
+## Bilinen sınırlar / açık işler
 
-## Bilinen sınırlar
-
+- **Clerk hâlâ development instance'ta** — production key setine geçilmedi,
+  gerçek trafikte limitlere takılır. Bu adım kullanıcı tarafından Clerk
+  dashboard'dan yapılmalı (yeni proje/domain bağlama gerektiriyor).
+- **Custom domain yok** — `noesis-seven-wheat.vercel.app` üzerinde çalışıyor.
+  `src/app/layout.tsx#siteUrl` ve `src/app/sitemap.ts`/`robots.ts` içindeki
+  sabit URL'ler custom domain bağlanınca güncellenmeli.
+- **Sunucu taraflı STT yok** — Web Speech API tarayıcı bağımlı (Chromium),
+  OpenAI key gelince Whisper'a geçirilebilir.
 - `/leaderboard` tüm kullanıcıları çekip JS'te sıralıyor — kullanıcı sayısı
   büyüdüğünde (binlerce+) SQL tarafında `ORDER BY` + `LIMIT`'e geçirilmeli.
+- **Analytics yok** — trafik/dönüşüm görünürlüğü henüz eklenmedi, bilinçli
+  olarak sona bırakıldı.
 
 ## Konvansiyonlar
 
@@ -80,3 +84,4 @@ deploy adımı bekliyor.
 - `npx prisma migrate dev` — şema değişikliğini uygula
 - `npx prisma db seed` — çekirdek konuları yükle
 - `npx prisma studio` — DB'yi görsel incele
+- `npx vercel deploy --prod --yes` — production deploy

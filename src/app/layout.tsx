@@ -23,9 +23,28 @@ const mono = IBM_Plex_Mono({
   weight: ["400", "500"],
 });
 
+// VERCEL_URL değişkeni deploy'a özel geçici alt alan adı verir (canonical
+// değil) — bu yüzden sabit production alias kullanılıyor. Custom domain
+// bağlanınca burayı güncelle.
+const siteUrl = "https://noesis-seven-wheat.vercel.app";
+
 export const metadata: Metadata = {
-  title: "noesis",
-  description: "15 dakika araştır, 2 dakikada diksiyonla anlat.",
+  metadataBase: new URL(siteUrl),
+  title: "noesis — Zihnini Yapay Zekadan Önce Sen Kullan",
+  description:
+    "15 dakika araştır, 2 dakikada diksiyonla anlat. Sosyal medyanın yarattığı zihinsel uyuşukluğa karşı günlük bir alışkanlık.",
+  openGraph: {
+    title: "noesis — Zihnini Yapay Zekadan Önce Sen Kullan",
+    description: "15 dakika araştır, 2 dakikada diksiyonla anlat.",
+    siteName: "noesis",
+    locale: "tr_TR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "noesis — Zihnini Yapay Zekadan Önce Sen Kullan",
+    description: "15 dakika araştır, 2 dakikada diksiyonla anlat.",
+  },
 };
 
 export default function RootLayout({
@@ -43,6 +62,15 @@ export default function RootLayout({
           <div className="grain" aria-hidden="true" />
           <AuthHeader />
           {children}
+          <footer className="relative z-10 flex items-center justify-center gap-4 py-4 font-mono text-[0.65rem] text-paper-dim/60 border-t border-ink-line">
+            <a href="/terms" className="hover:text-accent transition-colors">
+              Kullanım Koşulları
+            </a>
+            <span>·</span>
+            <a href="/privacy" className="hover:text-accent transition-colors">
+              Gizlilik
+            </a>
+          </footer>
         </body>
       </html>
     </ClerkProvider>

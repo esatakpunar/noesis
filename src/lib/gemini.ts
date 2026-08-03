@@ -61,7 +61,7 @@ export async function generateTopic(params: {
   const { category, difficulty, avoidTitles } = params;
 
   const prompt = `
-Sen PARADOXA/noesis platformu için içerik üreten bir küratörsün. Amaç: kullanıcının
+Sen noesis platformu için içerik üreten bir küratörsün. Amaç: kullanıcının
 15 dakika araştırıp 2 dakikada anlatacağı, gerçekten ilgi çekici, nadir ama doğrulanabilir
 bir kavram/kelime/fenomen üretmek.
 

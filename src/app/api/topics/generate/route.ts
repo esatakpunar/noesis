@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { generateTopic } from "@/lib/gemini";
 import { ensureDbUser } from "@/lib/auth";
 import { isTooSimilar, pickCategory, pickDifficulty } from "@/lib/personalize";
-import { DAILY_FREE_LIMIT, getTodayUsage } from "@/lib/plan";
+import { DAILY_FREE_LIMIT, GLOBAL_DAILY_AI_LIMIT, getTodayGlobalAiUsage, getTodayUsage } from "@/lib/plan";
 import { pickFromPool } from "@/lib/pool";
 import type { CategoryId } from "@/lib/categories";
 
@@ -32,7 +32,11 @@ export async function POST(req: NextRequest) {
 
   const body = RequestSchema.parse(await req.json());
 
-  const usedToday = await getTodayUsage(user.id);
+  const [usedToday, globalAiUsedToday] = await Promise.all([
+    getTodayUsage(user.id),
+    getTodayGlobalAiUsage(),
+  ]);
+
   if (usedToday >= DAILY_FREE_LIMIT) {
     const pooled = await fallbackToPool(user.id, body.category);
     if (pooled) return pooled;
@@ -40,6 +44,19 @@ export async function POST(req: NextRequest) {
       {
         error: "daily_limit_reached",
         message: `Günlük ücretsiz limitin (${DAILY_FREE_LIMIT} konu) doldu ve havuzda görmediğin başka konu kalmadı. Yarın devam edebilirsin.`,
+      },
+      { status: 429 },
+    );
+  }
+
+  // Hesap sayısından bağımsız global güvenlik ağı — bkz. src/lib/plan.ts
+  if (globalAiUsedToday >= GLOBAL_DAILY_AI_LIMIT) {
+    const pooled = await fallbackToPool(user.id, body.category);
+    if (pooled) return pooled;
+    return NextResponse.json(
+      {
+        error: "daily_limit_reached",
+        message: "Bugünkü konu üretim kapasitemiz doldu. Yarın devam edebilirsin.",
       },
       { status: 429 },
     );

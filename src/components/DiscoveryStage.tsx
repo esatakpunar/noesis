@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CATEGORIES, DIFFICULTY_LABEL, type CategoryId, type Topic } from "@/lib/categories";
+import { CATEGORIES, DIFFICULTY_LABEL, type CategoryId, type Difficulty, type Topic } from "@/lib/categories";
 import { getWeeklyChallenge } from "@/lib/weeklyChallenge";
+import { hasSeenOnboarding, markOnboardingSeen } from "@/lib/onboarding";
 import TopicReel from "@/components/TopicReel";
 
 export default function DiscoveryStage({
@@ -13,6 +14,7 @@ export default function DiscoveryStage({
   const [weekly] = useState(() => getWeeklyChallenge());
   const weeklyLabel = CATEGORIES.find((c) => c.id === weekly.category)?.label;
   const [category, setCategory] = useState<CategoryId | null>(null);
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [topic, setTopic] = useState<Topic | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,17 @@ export default function DiscoveryStage({
   const [reelTitles, setReelTitles] = useState<string[]>([]);
   const [customOpen, setCustomOpen] = useState(false);
   const [customTitle, setCustomTitle] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setShowOnboarding(!hasSeenOnboarding());
+  }, []);
+
+  function dismissOnboarding() {
+    markOnboardingSeen();
+    setShowOnboarding(false);
+  }
 
   useEffect(() => {
     fetch("/api/usage")
@@ -43,7 +55,10 @@ export default function DiscoveryStage({
       const res = await fetch("/api/topics/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(effectiveCategory ? { category: effectiveCategory } : {}),
+        body: JSON.stringify({
+          ...(effectiveCategory ? { category: effectiveCategory } : {}),
+          ...(difficulty ? { difficulty } : {}),
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
@@ -108,6 +123,25 @@ export default function DiscoveryStage({
           hiç görmediğin bir kavram.
         </p>
 
+        {showOnboarding && (
+          <div className="flex items-center gap-3 mb-6 px-4 py-2 border border-ink-line font-mono text-[0.7rem] text-paper-dim">
+            <span>
+              <span className="text-accent">①</span> Keşfet
+              <span className="mx-1.5 text-paper-dim/50">→</span>
+              <span className="text-accent">②</span> 15 dk Araştır
+              <span className="mx-1.5 text-paper-dim/50">→</span>
+              <span className="text-accent">③</span> 2 dk Anlat
+            </span>
+            <button
+              onClick={dismissOnboarding}
+              className="text-paper-dim/60 hover:text-accent transition-colors ml-1"
+              aria-label="Kapat"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         <button
           onClick={() => {
             setCategory(weekly.category);
@@ -120,7 +154,7 @@ export default function DiscoveryStage({
           Haftanın Meydan Okuması: {weeklyLabel}
         </button>
 
-        <div className="flex flex-wrap justify-center gap-2 mb-8">
+        <div className="flex flex-wrap justify-center gap-2 mb-3">
           <CategoryChip
             active={category === null}
             label="Fark Etmez"
@@ -132,6 +166,25 @@ export default function DiscoveryStage({
               active={category === c.id}
               label={c.label}
               onClick={() => setCategory(c.id)}
+            />
+          ))}
+        </div>
+
+        <div className="flex items-center justify-center gap-1.5 mb-8">
+          <span className="font-mono text-[0.6rem] uppercase tracking-wide text-paper-dim/50 mr-1">
+            Zorluk:
+          </span>
+          <DifficultyChip
+            active={difficulty === null}
+            label="Otomatik"
+            onClick={() => setDifficulty(null)}
+          />
+          {(Object.keys(DIFFICULTY_LABEL) as Difficulty[]).map((d) => (
+            <DifficultyChip
+              key={d}
+              active={difficulty === d}
+              label={DIFFICULTY_LABEL[d]}
+              onClick={() => setDifficulty(d)}
             />
           ))}
         </div>
@@ -254,6 +307,29 @@ function CategoryChip({
         active
           ? "border-accent bg-accent-soft text-paper"
           : "border-ink-line text-paper-dim hover:border-paper-dim"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function DifficultyChip({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-2 py-0.5 rounded-full font-mono text-[0.6rem] uppercase tracking-wide border transition-colors ${
+        active
+          ? "border-accent bg-accent-soft text-paper"
+          : "border-ink-line text-paper-dim/70 hover:border-paper-dim"
       }`}
     >
       {label}

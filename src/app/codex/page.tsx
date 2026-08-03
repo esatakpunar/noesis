@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { computeBadges } from "@/lib/badges";
+import CodexEntries from "@/components/CodexEntries";
 
 export default async function CodexPage() {
   const { userId } = await auth();
@@ -62,19 +63,7 @@ export default async function CodexPage() {
       {entries.length === 0 ? (
         <p className="text-paper-dim text-sm">Henüz kayıt yok.</p>
       ) : (
-        <ul className="space-y-4">
-          {entries.map((e) => (
-            <li key={e.id} className="border-b border-ink-line pb-4">
-              <div className="flex items-baseline justify-between">
-                <span className="font-display italic text-2xl">{e.topic.title}</span>
-                <span className="font-mono text-xs text-paper-dim">
-                  {new Date(e.createdAt).toLocaleDateString("tr-TR")}
-                </span>
-              </div>
-              {e.notes && <p className="text-paper-dim text-sm mt-1 line-clamp-2">{e.notes}</p>}
-            </li>
-          ))}
-        </ul>
+        <CodexEntries entries={entries} />
       )}
     </div>
   );
