@@ -47,8 +47,20 @@ araştırılır, 2 dakikada diksiyonla anlatılır.
   sonuç ekranından 1080×1080 PNG indirme (`html-to-image`).
 - **Freemium** (`src/lib/plan.ts`) — günlük 5 ücretsiz konu, aşınca önce havuz
   denenir, o da tükenirse 429.
-- **Liderlik/Kodeks/rozet/haftalık meydan okuma** — `/leaderboard`, `/codex`,
+- **Liderlik/Kodeks/rozet/haftalık meydan okuma** — `/leaderboard`, `/codex`
+  (arama + kategori filtresi, `src/components/CodexEntries.tsx`), rozetler
   `src/lib/badges.ts`, `src/lib/weeklyChallenge.ts`.
+- **Günlük hatırlatma push bildirimi** — tamamen ücretsiz (Web Push + VAPID,
+  üçüncü taraf servis yok, custom domain gerektirmez). `public/sw.js`
+  service worker, `src/lib/pushClient.ts` abone olma, `src/lib/push.ts`
+  sunucu taraflı gönderim. `vercel.json` cron'u her gün 17:00 UTC'de
+  (20:00 TR) `/api/cron/reminders`'ı tetikler — o gün `CodexEntry`'si
+  olmayan abonelere bildirim yollar, streak'i olana özel mesaj. Cron,
+  Clerk'ten muaf (`src/proxy.ts`), kendi `CRON_SECRET`'ıyla doğrulanır.
+- **Global günlük AI üretim tavanı** (`plan.ts#GLOBAL_DAILY_AI_LIMIT`) —
+  hesap sayısından bağımsız bütçe güvenlik ağı, aşılınca havuza düşer.
+- **Onboarding** (`src/lib/onboarding.ts`) — Discovery'de tek seferlik,
+  kapatılabilir 3 adım özeti, localStorage'da hatırlanır.
 
 ## Bilinen sınırlar / açık işler
 

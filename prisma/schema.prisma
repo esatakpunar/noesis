@@ -43,8 +43,24 @@ model User {
   streakCount    Int       @default(0)
   streakLastDate DateTime?
 
-  codexEntries CodexEntry[]
-  topicHistory TopicHistory[]
+  codexEntries      CodexEntry[]
+  topicHistory      TopicHistory[]
+  pushSubscriptions PushSubscription[]
+}
+
+// Web Push aboneliği — günlük hatırlatma bildirimleri için (src/app/api/cron/reminders).
+// Bir kullanıcı birden fazla cihazdan abone olabilir, hepsine gönderilir.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Topic {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useUser, UserButton, SignInButton } from "@clerk/nextjs";
 import WarmupModal from "@/components/WarmupModal";
+import NotificationToggle from "@/components/NotificationToggle";
 
 export default function AuthHeader() {
   const { isSignedIn } = useUser();
@@ -38,6 +39,7 @@ export default function AuthHeader() {
               >
                 Liderlik
               </Link>
+              <NotificationToggle />
               <UserButton />
             </>
           ) : (
