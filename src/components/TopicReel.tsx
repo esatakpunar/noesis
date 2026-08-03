@@ -2,20 +2,31 @@
 
 // Gemini isteği süresince gösterilen "çark" efekti — gerçek başlıklar henüz
 // bilinmediği için kurgusal olduğu belli olmayan gerçek konu adı YAZMIYORUZ,
-// atmosfer taşıyan tanıtım cümleleri döndürüyoruz.
+// atmosfer taşıyan tanıtım kelimeleri döndürüyoruz. Hızlı akış + hafif blur
+// slot-machine hissini verir; kısa süre içinde tekrar fark edilmesin diye
+// liste geniş tutuldu.
 const TEASERS = [
-  "Kadim bir kavram…",
-  "Unutulmuş bir terim…",
-  "Tuhaf bir fenomen…",
-  "Nadir bir kelime…",
-  "Gizli bir paradoks…",
-  "Bilinmeyen bir köken…",
-  "Şaşırtıcı bir bağlantı…",
-  "Az bilinen bir gerçek…",
+  "Kadim…",
+  "Nadir…",
+  "Tuhaf…",
+  "Gizli…",
+  "Unutulmuş…",
+  "Şaşırtıcı…",
+  "Esrarlı…",
+  "Antik…",
+  "Sıradışı…",
+  "Bilinmez…",
+  "Keşfedilmemiş…",
+  "Derin…",
+  "Saklı…",
+  "Uzak…",
+  "Yabancı…",
+  "Fevkalade…",
 ];
 
 // Kusursuz döngü için liste iki kez art arda eklenir.
 const REEL_ITEMS = [...TEASERS, ...TEASERS];
+const SECONDS_PER_ITEM = 0.12;
 
 export default function TopicReel() {
   return (
@@ -27,7 +38,7 @@ export default function TopicReel() {
           "linear-gradient(to bottom, transparent, black 30%, black 70%, transparent)",
       }}
     >
-      <ul className="animate-reel">
+      <ul className="animate-reel" style={{ filter: "blur(0.6px)" }}>
         {REEL_ITEMS.map((label, i) => (
           <li
             key={i}
@@ -44,7 +55,7 @@ export default function TopicReel() {
           to { transform: translateY(-50%); }
         }
         .animate-reel {
-          animation: reel-scroll ${TEASERS.length * 0.7}s linear infinite;
+          animation: reel-scroll ${TEASERS.length * SECONDS_PER_ITEM}s linear infinite;
         }
       `}</style>
     </div>

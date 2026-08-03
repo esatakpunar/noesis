@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CATEGORIES, DIFFICULTY_LABEL, type CategoryId, type Topic } from "@/lib/categories";
 import { getWeeklyChallenge } from "@/lib/weeklyChallenge";
 import TopicReel from "@/components/TopicReel";
@@ -16,6 +16,7 @@ export default function DiscoveryStage({
   const [topic, setTopic] = useState<Topic | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   async function fetchTopic() {
     setLoading(true);
@@ -38,6 +39,10 @@ export default function DiscoveryStage({
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (topic) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [topic]);
 
   return (
     <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-16 radial-glow">
@@ -92,7 +97,10 @@ export default function DiscoveryStage({
         {error && <p className="mt-4 text-sm text-accent">{error}</p>}
 
         {topic && (
-          <div className="mt-12 w-full border-t border-ink-line pt-10 animate-[reveal_0.5s_ease-out]">
+          <div
+            ref={resultRef}
+            className="mt-12 w-full border-t border-ink-line pt-10 pb-6 animate-[reveal_0.5s_ease-out]"
+          >
             <div className="flex items-center justify-center gap-3 mb-3 font-mono text-xs uppercase tracking-widest text-paper-dim">
               <span>{CATEGORIES.find((c) => c.id === topic.category)?.label}</span>
               <span className="w-1 h-1 rounded-full bg-accent" />
