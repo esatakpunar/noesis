@@ -16,9 +16,18 @@ export default function DiscoveryStage({
   const [topic, setTopic] = useState<Topic | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [remaining, setRemaining] = useState<number | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
-  async function fetchTopic() {
+  useEffect(() => {
+    fetch("/api/usage")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => data && setRemaining(data.remaining))
+      .catch(() => {});
+  }, []);
+
+  async function fetchTopic(categoryOverride?: CategoryId | null) {
+    const effectiveCategory = categoryOverride !== undefined ? categoryOverride : category;
     setLoading(true);
     setError(null);
     setTopic(null);
@@ -26,13 +35,14 @@ export default function DiscoveryStage({
       const res = await fetch("/api/topics/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(category ? { category } : {}),
+        body: JSON.stringify(effectiveCategory ? { category: effectiveCategory } : {}),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.message ?? "Konu getirilemedi");
       }
       setTopic(await res.json());
+      setRemaining((prev) => (prev !== null ? Math.max(0, prev - 1) : prev));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Konu üretilirken bir sorun oldu. Tekrar dene.");
     } finally {
@@ -60,8 +70,12 @@ export default function DiscoveryStage({
         </p>
 
         <button
-          onClick={() => setCategory(weekly.category)}
-          className="mb-8 flex items-center gap-2 px-4 py-2 border border-ink-line hover:border-accent transition-colors font-mono text-xs uppercase tracking-wide text-paper-dim hover:text-paper"
+          onClick={() => {
+            setCategory(weekly.category);
+            fetchTopic(weekly.category);
+          }}
+          disabled={loading}
+          className="mb-8 flex items-center gap-2 px-4 py-2 border border-ink-line hover:border-accent transition-colors font-mono text-xs uppercase tracking-wide text-paper-dim hover:text-paper disabled:opacity-50"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
           Haftanın Meydan Okuması: {weeklyLabel}
@@ -87,11 +101,17 @@ export default function DiscoveryStage({
           <TopicReel />
         ) : (
           <button
-            onClick={fetchTopic}
+            onClick={() => fetchTopic()}
             className="group relative px-8 py-3 border border-accent text-accent font-mono text-sm uppercase tracking-widest hover:bg-accent hover:text-ink transition-colors"
           >
             Konu Getir
           </button>
+        )}
+
+        {remaining !== null && !loading && (
+          <p className="mt-3 font-mono text-[0.65rem] text-paper-dim/70">
+            Bugün kalan ücretsiz konu: {remaining}
+          </p>
         )}
 
         {error && <p className="mt-4 text-sm text-accent">{error}</p>}

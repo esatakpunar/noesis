@@ -19,11 +19,13 @@ export default function ResultStage({
       </span>
       <h1 className="font-display italic text-5xl mb-10">{topic.title}</h1>
 
-      <div className="grid grid-cols-3 gap-6 sm:gap-12 mb-12">
-        <Stat label="Kelime/Dk" value={analytics.wpm} />
-        <Stat label="Dolgu Kelime" value={analytics.fillerCount} />
-        <Stat label="Netlik" value={`${analytics.clarityScore}`} suffix="/100" />
+      <div className="grid grid-cols-3 gap-6 sm:gap-12 mb-4">
+        <Stat label="Kelime/Dk" value={analytics.wpm} hint="İdeal: 120-160" />
+        <Stat label="Dolgu Kelime" value={analytics.fillerCount} hint='"şey", "yani" vb.' />
+        <Stat label="Netlik" value={`${analytics.clarityScore}`} suffix="/100" hint="Hız + dolgu kelime" />
       </div>
+
+      <p className="text-paper-dim text-sm max-w-sm mb-12">{feedbackFor(analytics)}</p>
 
       <button
         onClick={onRestart}
@@ -35,9 +37,19 @@ export default function ResultStage({
   );
 }
 
-function Stat({ label, value, suffix }: { label: string; value: number | string; suffix?: string }) {
+function Stat({
+  label,
+  value,
+  suffix,
+  hint,
+}: {
+  label: string;
+  value: number | string;
+  suffix?: string;
+  hint: string;
+}) {
   return (
-    <div>
+    <div title={hint}>
       <div className="font-mono text-4xl tabular-nums">
         {value}
         {suffix && <span className="text-paper-dim text-xl">{suffix}</span>}
@@ -45,6 +57,14 @@ function Stat({ label, value, suffix }: { label: string; value: number | string;
       <div className="font-mono text-xs uppercase tracking-widest text-paper-dim mt-1">
         {label}
       </div>
+      <div className="text-[0.65rem] text-paper-dim/70 mt-0.5">{hint}</div>
     </div>
   );
+}
+
+function feedbackFor(analytics: { wpm: number; clarityScore: number }): string {
+  if (analytics.clarityScore >= 80) return "Akıcı ve net bir anlatımdı — bu tempoyu koru.";
+  if (analytics.wpm > 170) return "Biraz hızlı konuştun — bir tık yavaşlamak netliği artırır.";
+  if (analytics.wpm < 100) return "Biraz yavaş konuştun — enerjini artırmayı dene.";
+  return "İyi bir başlangıç — dolgu kelimeleri azaltmak netliği artırır.";
 }
