@@ -1,7 +1,8 @@
 "use client";
 
-// Yedek liste — havuzda yeterli gerçek konu yoksa (ör. yepyeni deploy)
-// veya /api/topics/sample başarısız olursa kullanılır.
+// Havuz henüz küçükken (yeni deploy, az kullanıcı) gerçek başlıklar tek
+// başına çok az çeşitlilik verir — bu yüzden gerçek başlıklarla karıştırılıp
+// döngü uzatılır. Havuz büyüdükçe gerçek içeriğin payı doğal olarak artar.
 const FALLBACK_TEASERS = [
   "Kadim…",
   "Nadir…",
@@ -19,13 +20,38 @@ const FALLBACK_TEASERS = [
   "Uzak…",
   "Yabancı…",
   "Fevkalade…",
+  "Sarsıcı…",
+  "Muğlak…",
+  "Efsanevi…",
+  "Örtük…",
+  "Değişmez…",
+  "Bulanık…",
+  "Katmanlı…",
+  "Belirsiz…",
+  "İnatçı…",
+  "Zorlu…",
+  "Yankılı…",
+  "Kırılgan…",
+  "Yoğun…",
+  "Sınırsız…",
 ];
 
-const MIN_ITEMS = 8;
 const SECONDS_PER_ITEM = 0.12;
 
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 export default function TopicReel({ titles }: { titles?: string[] }) {
-  const items = titles && titles.length >= MIN_ITEMS ? titles : FALLBACK_TEASERS;
+  const items =
+    titles && titles.length > 0
+      ? shuffle([...new Set(titles), ...FALLBACK_TEASERS])
+      : FALLBACK_TEASERS;
   // Kusursuz döngü için liste iki kez art arda eklenir.
   const reelItems = [...items, ...items];
 

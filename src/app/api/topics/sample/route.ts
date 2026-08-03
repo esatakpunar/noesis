@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const SAMPLE_SIZE = 20;
+// Gemini isteği tipik olarak ~10sn sürüyor; reel 0.12sn/öğe hızında akıyor,
+// yani döngünün tekrar etmeden en az bu kadar sürmesi için ~100 başlık gerekiyor.
+const SAMPLE_SIZE = 120;
 
 /**
  * Çark animasyonu için gerçek konu başlıklarından rastgele bir örnek döner.
