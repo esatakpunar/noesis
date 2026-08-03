@@ -17,12 +17,18 @@ export default function DiscoveryStage({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [reelTitles, setReelTitles] = useState<string[]>([]);
   const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/usage")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => data && setRemaining(data.remaining))
+      .catch(() => {});
+
+    fetch("/api/topics/sample")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => Array.isArray(data) && setReelTitles(data))
       .catch(() => {});
   }, []);
 
@@ -101,7 +107,7 @@ export default function DiscoveryStage({
         </div>
 
         {loading ? (
-          <TopicReel />
+          <TopicReel titles={reelTitles} />
         ) : (
           <button
             onClick={() => fetchTopic()}

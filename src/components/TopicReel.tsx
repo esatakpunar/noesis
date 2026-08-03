@@ -1,11 +1,8 @@
 "use client";
 
-// Gemini isteği süresince gösterilen "çark" efekti — gerçek başlıklar henüz
-// bilinmediği için kurgusal olduğu belli olmayan gerçek konu adı YAZMIYORUZ,
-// atmosfer taşıyan tanıtım kelimeleri döndürüyoruz. Hızlı akış + hafif blur
-// slot-machine hissini verir; kısa süre içinde tekrar fark edilmesin diye
-// liste geniş tutuldu.
-const TEASERS = [
+// Yedek liste — havuzda yeterli gerçek konu yoksa (ör. yepyeni deploy)
+// veya /api/topics/sample başarısız olursa kullanılır.
+const FALLBACK_TEASERS = [
   "Kadim…",
   "Nadir…",
   "Tuhaf…",
@@ -24,11 +21,14 @@ const TEASERS = [
   "Fevkalade…",
 ];
 
-// Kusursuz döngü için liste iki kez art arda eklenir.
-const REEL_ITEMS = [...TEASERS, ...TEASERS];
+const MIN_ITEMS = 8;
 const SECONDS_PER_ITEM = 0.12;
 
-export default function TopicReel() {
+export default function TopicReel({ titles }: { titles?: string[] }) {
+  const items = titles && titles.length >= MIN_ITEMS ? titles : FALLBACK_TEASERS;
+  // Kusursuz döngü için liste iki kez art arda eklenir.
+  const reelItems = [...items, ...items];
+
   return (
     <div
       className="relative h-14 overflow-hidden"
@@ -39,10 +39,10 @@ export default function TopicReel() {
       }}
     >
       <ul className="animate-reel" style={{ filter: "blur(0.6px)" }}>
-        {REEL_ITEMS.map((label, i) => (
+        {reelItems.map((label, i) => (
           <li
             key={i}
-            className="h-14 flex items-center justify-center font-display italic text-3xl text-paper-dim"
+            className="h-14 flex items-center justify-center px-4 font-display italic text-3xl text-paper-dim whitespace-nowrap"
           >
             {label}
           </li>
@@ -55,7 +55,7 @@ export default function TopicReel() {
           to { transform: translateY(-50%); }
         }
         .animate-reel {
-          animation: reel-scroll ${TEASERS.length * SECONDS_PER_ITEM}s linear infinite;
+          animation: reel-scroll ${items.length * SECONDS_PER_ITEM}s linear infinite;
         }
       `}</style>
     </div>
