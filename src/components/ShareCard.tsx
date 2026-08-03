@@ -60,7 +60,7 @@ const ShareCard = forwardRef<
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 40 }}>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
         <Stat label="Kelime/Dk" value={analytics.wpm} />
         <Stat label="Dolgu Kelime" value={analytics.fillerCount} />
         <Stat label="Netlik" value={`${analytics.clarityScore}/100`} />
@@ -73,7 +73,7 @@ export default ShareCard;
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div>
+    <div style={{ textAlign: "center" }}>
       <div style={{ fontFamily: "var(--font-mono)", fontSize: 32, fontWeight: 500 }}>{value}</div>
       <div
         style={{
