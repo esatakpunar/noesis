@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CATEGORIES, DIFFICULTY_LABEL, type CategoryId, type Topic } from "@/lib/categories";
 import { getWeeklyChallenge } from "@/lib/weeklyChallenge";
+import TopicReel from "@/components/TopicReel";
 
 export default function DiscoveryStage({
   onBegin,
@@ -77,13 +78,16 @@ export default function DiscoveryStage({
           ))}
         </div>
 
-        <button
-          onClick={fetchTopic}
-          disabled={loading}
-          className="group relative px-8 py-3 border border-accent text-accent font-mono text-sm uppercase tracking-widest hover:bg-accent hover:text-ink transition-colors disabled:opacity-50 disabled:cursor-wait"
-        >
-          {loading ? "Aranıyor…" : "Konu Getir"}
-        </button>
+        {loading ? (
+          <TopicReel />
+        ) : (
+          <button
+            onClick={fetchTopic}
+            className="group relative px-8 py-3 border border-accent text-accent font-mono text-sm uppercase tracking-widest hover:bg-accent hover:text-ink transition-colors"
+          >
+            Konu Getir
+          </button>
+        )}
 
         {error && <p className="mt-4 text-sm text-accent">{error}</p>}
 
