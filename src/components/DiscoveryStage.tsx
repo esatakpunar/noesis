@@ -18,6 +18,8 @@ export default function DiscoveryStage({
   const [error, setError] = useState<string | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [reelTitles, setReelTitles] = useState<string[]>([]);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customTitle, setCustomTitle] = useState("");
   const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,6 +64,34 @@ export default function DiscoveryStage({
   useEffect(() => {
     if (topic) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [topic]);
+
+  async function submitCustomTopic(e: React.FormEvent) {
+    e.preventDefault();
+    const title = customTitle.trim();
+    if (!title) return;
+    setLoading(true);
+    setError(null);
+    setTopic(null);
+    try {
+      const res = await fetch("/api/topics/custom", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(category ? { title, category } : { title }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message ?? "Konu oluşturulamadı");
+      }
+      const data: Topic = await res.json();
+      setTopic(data);
+      setCustomTitle("");
+      setCustomOpen(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Konu oluşturulurken bir sorun oldu.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-16 radial-glow">
@@ -123,6 +153,37 @@ export default function DiscoveryStage({
           </p>
         )}
 
+        {!loading && (
+          <div className="mt-4">
+            {!customOpen ? (
+              <button
+                onClick={() => setCustomOpen(true)}
+                className="font-mono text-[0.65rem] text-paper-dim/70 hover:text-accent underline underline-offset-2"
+              >
+                veya kendi konunu gir
+              </button>
+            ) : (
+              <form onSubmit={submitCustomTopic} className="flex items-center gap-2 justify-center">
+                <input
+                  autoFocus
+                  value={customTitle}
+                  onChange={(e) => setCustomTitle(e.target.value)}
+                  placeholder="ör. Sisifos Söylencesi"
+                  maxLength={80}
+                  className="bg-ink-soft border border-ink-line px-3 py-2 text-sm text-paper placeholder:text-paper-dim/50 focus:outline-none focus:border-accent w-56"
+                />
+                <button
+                  type="submit"
+                  disabled={!customTitle.trim()}
+                  className="px-3 py-2 border border-accent text-accent font-mono text-xs uppercase tracking-widest hover:bg-accent hover:text-ink transition-colors disabled:opacity-40"
+                >
+                  Başla
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+
         {error && <p className="mt-4 text-sm text-accent">{error}</p>}
 
         {topic && (
@@ -140,6 +201,12 @@ export default function DiscoveryStage({
                   <span title="Günlük limitin doldu, bu konu paylaşılan havuzdan geldi">
                     Havuzdan
                   </span>
+                </>
+              )}
+              {topic.source === "user" && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-accent" />
+                  <span>Kendi Konun</span>
                 </>
               )}
             </div>

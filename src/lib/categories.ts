@@ -27,4 +27,5 @@ export interface Topic {
   origin: string | null;
   researchPrompts: string[];
   fromPool?: boolean;
+  source?: "seed" | "ai" | "user";
 }
