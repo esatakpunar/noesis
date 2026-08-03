@@ -12,6 +12,10 @@ interface SpeechRecognitionEventLike {
   results: ArrayLike<SpeechRecognitionResultLike>;
 }
 
+interface SpeechRecognitionErrorLike {
+  error: string;
+}
+
 interface SpeechRecognitionLike extends EventTarget {
   lang: string;
   continuous: boolean;
@@ -19,7 +23,8 @@ interface SpeechRecognitionLike extends EventTarget {
   start: () => void;
   stop: () => void;
   onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: ((event: unknown) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorLike) => void) | null;
+  onstart: (() => void) | null;
   onend: (() => void) | null;
 }
 
@@ -63,10 +68,30 @@ export function createTranscriber(onUpdate: (fullTranscript: string) => void) {
   return {
     start: () => recognition.start(),
     stop: () => recognition.stop(),
+    onStart: (cb: () => void) => {
+      recognition.onstart = cb;
+    },
     onEnd: (cb: () => void) => {
       recognition.onend = cb;
     },
+    onError: (cb: (error: string) => void) => {
+      recognition.onerror = (e) => cb(e.error);
+    },
   };
+}
+
+export function micErrorMessage(error: string): string {
+  switch (error) {
+    case "not-allowed":
+    case "permission-denied":
+      return "Mikrofon izni verilmedi. Tarayıcı ayarlarından izin verip tekrar dene — istersen mikrofonsuz da devam edebilirsin.";
+    case "no-speech":
+      return "Ses algılanamadı. Mikrofonuna daha yakın konuşmayı dene.";
+    case "audio-capture":
+      return "Mikrofon bulunamadı. Bir mikrofonun bağlı olduğundan emin ol.";
+    default:
+      return "Mikrofonla ilgili bir sorun oldu. Tekrar dene veya mikrofonsuz devam et.";
+  }
 }
 
 const FILLER_WORDS = ["şey", "yani", "işte", "falan", "filan", "ee", "aa", "hani"];

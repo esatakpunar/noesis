@@ -3,9 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import type { Topic } from "@/lib/categories";
 import { useCountdown } from "@/lib/useCountdown";
-import { analyzeSpeech, createTranscriber, isSpeechSupported, type SpeechAnalytics } from "@/lib/speech";
+import {
+  analyzeSpeech,
+  createTranscriber,
+  isSpeechSupported,
+  micErrorMessage,
+  type SpeechAnalytics,
+} from "@/lib/speech";
 
 const TALK_SECONDS = 2 * 60;
+
+type MicState = "idle" | "requesting" | "active" | "denied" | "manual";
 
 export default function PresentationStage({
   topic,
@@ -14,11 +22,14 @@ export default function PresentationStage({
   topic: Topic;
   onFinish: (analytics: SpeechAnalytics) => void;
 }) {
-  const [recording, setRecording] = useState(false);
+  const [micState, setMicState] = useState<MicState>("idle");
+  const [micError, setMicError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState("");
   const [supported] = useState(isSpeechSupported());
   const startedAt = useRef<number | null>(null);
   const transcriberRef = useRef<ReturnType<typeof createTranscriber>>(null);
+
+  const recording = micState === "active" || micState === "manual";
 
   const finish = () => {
     transcriberRef.current?.stop();
@@ -35,12 +46,29 @@ export default function PresentationStage({
   }, []);
 
   function startRecording() {
-    if (!supported) return;
-    startedAt.current = Date.now();
-    setRecording(true);
+    if (!supported) {
+      startedAt.current = Date.now();
+      setMicState("manual");
+      return;
+    }
+    setMicState("requesting");
+    setMicError(null);
     const transcriber = createTranscriber(setTranscript);
     transcriberRef.current = transcriber;
+    transcriber?.onStart(() => {
+      startedAt.current = Date.now();
+      setMicState("active");
+    });
+    transcriber?.onError((error) => {
+      setMicError(micErrorMessage(error));
+      setMicState("denied");
+    });
     transcriber?.start();
+  }
+
+  function continueWithoutMic() {
+    startedAt.current = Date.now();
+    setMicState("manual");
   }
 
   return (
@@ -71,14 +99,41 @@ export default function PresentationStage({
         </div>
       </div>
 
-      {!supported && (
-        <p className="text-sm text-accent mb-6 max-w-sm">
+      {!supported && micState === "idle" && (
+        <p className="text-sm text-paper-dim mb-6 max-w-sm">
           Bu tarayıcı canlı konuşma tanımayı desteklemiyor (Chrome önerilir). Yine de
-          süreyi kullanıp elle anlatabilirsin.
+          süreyi kullanıp elle anlatabilirsin — sadece konuşma analizi çıkmaz.
         </p>
       )}
 
-      {!recording ? (
+      {supported && micState === "idle" && (
+        <p className="text-sm text-paper-dim mb-6 max-w-sm">
+          Başlarken tarayıcı mikrofon izni isteyecek — konuşma hızını ve netliğini
+          ölçebilmemiz için izin vermen gerekiyor.
+        </p>
+      )}
+
+      {micState === "denied" && micError && (
+        <div className="mb-6 max-w-sm space-y-3">
+          <p className="text-sm text-accent">{micError}</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={startRecording}
+              className="px-4 py-2 border border-accent text-accent font-mono text-xs uppercase tracking-widest hover:bg-accent hover:text-ink transition-colors"
+            >
+              Tekrar Dene
+            </button>
+            <button
+              onClick={continueWithoutMic}
+              className="px-4 py-2 border border-ink-line text-paper-dim font-mono text-xs uppercase tracking-widest hover:border-paper-dim transition-colors"
+            >
+              Mikrofonsuz Devam Et
+            </button>
+          </div>
+        </div>
+      )}
+
+      {micState === "idle" || micState === "denied" ? (
         <button
           onClick={startRecording}
           disabled={remaining === 0}
@@ -86,6 +141,10 @@ export default function PresentationStage({
         >
           Anlatmaya Başla
         </button>
+      ) : micState === "requesting" ? (
+        <p className="px-10 py-4 font-mono text-sm uppercase tracking-widest text-paper-dim">
+          Mikrofon izni bekleniyor…
+        </p>
       ) : (
         <button
           onClick={finish}
@@ -95,7 +154,14 @@ export default function PresentationStage({
         </button>
       )}
 
-      {recording && (
+      {micState === "manual" && (
+        <p className="mt-8 text-paper-dim text-sm max-w-sm">
+          Mikrofonsuz devam ediyorsun — süre işliyor, konuşma analizi bu oturumda
+          çıkmayacak.
+        </p>
+      )}
+
+      {micState === "active" && (
         <p className="mt-8 text-paper-dim text-sm leading-relaxed max-w-lg min-h-[4rem]">
           {transcript || "…dinliyorum"}
         </p>
